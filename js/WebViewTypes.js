@@ -281,6 +281,8 @@ export type AndroidWebViewProps = $ReadOnly<{|
    */
   userAgent?: ?string,
 
+  customSchemes?: $ReadOnlyArray<string>,
+
   /**
    * Specifies the mixed content mode. i.e WebView will allow a secure origin to load content from any other origin.
    *
