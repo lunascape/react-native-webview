@@ -63,6 +63,11 @@ import javax.annotation.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.os.Handler;
+import android.os.Looper;
+import android.view.View;
+import android.webkit.WebView.HitTestResult;
+import android.os.Message;
 /**
  * Manages instances of {@link WebView}
  *
@@ -366,7 +371,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     }
 
     public void onMessage(String message) {
-      dispatchEvent(this, new TopMessageEvent(this.getId(), message));
+      WritableMap data = Arguments.createMap();
+      data.putString("data", message);
+      dispatchEvent(this, new TopMessageEvent(this.getId(), data));
     }
 
     protected void cleanupCallbacksAndDestroy() {
@@ -438,6 +445,44 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     if (ReactBuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       WebView.setWebContentsDebuggingEnabled(true);
     }
+
+    webView.setOnLongClickListener(new View.OnLongClickListener() {
+      @Override
+      public boolean onLongClick(View view) {
+        final RNCWebView webView = (RNCWebView) view;
+        HitTestResult result = webView.getHitTestResult();
+        final String extra = result.getExtra();
+        final int type = result.getType();
+        if (type == HitTestResult.SRC_IMAGE_ANCHOR_TYPE || type == HitTestResult.SRC_ANCHOR_TYPE || type == HitTestResult.IMAGE_TYPE || type == HitTestResult.UNKNOWN_TYPE) {
+          Handler handler = new Handler(webView.getHandler().getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+              String url = (String) msg.getData().get("url");
+              String image_url = extra;
+              if (url == null && image_url == null) {
+                super.handleMessage(msg);
+              } else {
+                if (type == HitTestResult.SRC_ANCHOR_TYPE) {
+                  image_url = "";
+                }
+                // when any downloaded image file is showing in webview - https://github.com/lunascape/react-native-wkwebview/pull/45
+                if (type == HitTestResult.IMAGE_TYPE && url == null) {
+                  url = image_url;
+                }
+                WritableMap data = Arguments.createMap();
+                data.putString("type", "contextmenu");
+                data.putString("url", url);
+                data.putString("image_url", image_url);
+                dispatchEvent(webView, new TopMessageEvent(webView.getId(), data));
+              }
+            }
+          };
+          Message msg = handler.obtainMessage();
+          webView.requestFocusNodeHref(msg);
+        }
+        return false; // return true to disable copy/paste action bar
+      }
+    });
 
     return webView;
   }
