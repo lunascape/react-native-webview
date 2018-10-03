@@ -174,6 +174,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       if (mOriginWhitelist != null && shouldHandleURL(mOriginWhitelist, url)) {
         return false;
       }
+      // launchIntent(view.getContext(), url);
+      // return true;
       Uri uri = Uri.parse(url);
       RNCWebView webView = (RNCWebView) view;
       if (uri == null) {
