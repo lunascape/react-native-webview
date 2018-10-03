@@ -194,6 +194,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse(url));
             webView.getContext().startActivity(intent);
+            webView.shouldStartLoadWithRequest(url);
             return true;
           }
           return false;
@@ -202,6 +203,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           try {
             // Checking supported scheme only
             if (customSchemes != null && customSchemes.contains(urlScheme)) {
+              webView.shouldStartLoadWithRequest(url);
               return true;
             } else if (urlScheme.equalsIgnoreCase("intent")) {
               // Get payload and scheme the intent wants to open
@@ -213,6 +215,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
                 // Checking supported scheme only
                 if (customSchemes != null && customSchemes.contains(scheme)) {
                   String convertedUrl = scheme + "://" + payload;
+                  webView.shouldStartLoadWithRequest(convertedUrl);
                   return true;
                 }
               }
@@ -465,7 +468,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     public void onMessage(String message) {
       WritableMap data = Arguments.createMap();
       data.putString("data", message);
-      dispatchEvent(this, new TopMessageEvent(this.getId(), data));
+      // dispatchEvent(this, new TopMessageEvent(this.getId(), data));
     }
 
     public void setCustomSchemes(ArrayList<Object> schemes) {
@@ -474,6 +477,23 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
     public ArrayList<Object> getCustomSchemes() {
       return this.customSchemes;
+    }
+
+    public String getCustomOverrideUrlFormat() {
+      return this.customOverrideUrlFormat;
+    }
+
+    public void shouldStartLoadWithRequest(String url) {
+      // Sending event to JS side
+      WritableMap event = Arguments.createMap();
+      event.putDouble("target", this.getId());
+      event.putString("url", url);
+      event.putBoolean("loading", false);
+      event.putDouble("progress", this.getProgress());
+      event.putString("title", this.getTitle());
+      event.putBoolean("canGoBack", this.canGoBack());
+      event.putBoolean("canGoForward", this.canGoForward());
+      dispatchEvent(this, new TopMessageEvent(this.getId(), event));
     }
     protected void cleanupCallbacksAndDestroy() {
       setWebViewClient(null);
