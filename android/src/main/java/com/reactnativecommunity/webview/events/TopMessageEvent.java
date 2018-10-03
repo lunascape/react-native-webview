@@ -11,9 +11,9 @@ import com.facebook.react.uimanager.events.RCTEventEmitter;
 public class TopMessageEvent extends Event<TopMessageEvent> {
 
   public static final String EVENT_NAME = "topMessage";
-  private final String mData;
+  private WritableMap mData;
 
-  public TopMessageEvent(int viewId, String data) {
+  public TopMessageEvent(int viewId, WritableMap data) {
     super(viewId);
     mData = data;
   }
@@ -36,8 +36,8 @@ public class TopMessageEvent extends Event<TopMessageEvent> {
 
   @Override
   public void dispatch(RCTEventEmitter rctEventEmitter) {
-    WritableMap data = Arguments.createMap();
-    data.putString("data", mData);
-    rctEventEmitter.receiveEvent(getViewTag(), EVENT_NAME, data);
+    // WritableMap data = Arguments.createMap();
+    // data.putString("data", mData);
+    rctEventEmitter.receiveEvent(getViewTag(), EVENT_NAME, mData);
   }
 }
