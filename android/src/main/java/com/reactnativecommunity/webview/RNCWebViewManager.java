@@ -86,6 +86,9 @@ import android.graphics.Canvas;
 import android.os.Environment;
 import android.widget.Toast;
 import android.content.DialogInterface;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 
 /**
@@ -128,6 +131,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public static final int COMMAND_INJECT_JAVASCRIPT = 6;
   public static final int SET_GEOLOCATION_PERMISSION = 8;
   public static final int CAPTURE_SCREEN = 7;
+  public static final int COMMAND_SEARCH_IN_PAGE = 9;
   public static final String DOWNLOAD_DIRECTORY = Environment.getExternalStorageDirectory() + "/Android/data/jp.co.lunascape.android.ilunascape/downloads/";
 
   // Use `webView.loadUrl("about:blank")` to reliably reset the view
@@ -557,6 +561,34 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         this.setGeolocationPermissionCallback(null);
       }
     }
+
+    public void searchInPage(String keyword) {
+      String[] words = keyword.split(" |　");
+      String[] highlightColors = {
+        "yellow", "cyan", "magenta", "greenyellow", "tomato", "lightskyblue"
+      };
+      try {
+        InputStream fileInputStream;
+        fileInputStream = this.getContext().getAssets().open("SearchWebView.js");
+        byte[] readBytes = new byte[fileInputStream.available()];
+        fileInputStream.read(readBytes);
+        String jsString = new String(readBytes);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("MyApp_RemoveAllHighlights();");
+        for (int i = 0; i < words.length; i++) {
+          String color = i < highlightColors.length ? highlightColors[i] : highlightColors[highlightColors.length - 1];
+          sb.append("MyApp_HighlightAllOccurencesOfString('" + words[i] + "','" + color + "');");
+        }
+        sb.append("alert('" + this.getContext().getString(R.string.dialog_found) + ": ' + MyApp_SearchResultCount);");
+        sb.append("MyApp_ScrollToHighlightTop();");
+        this.loadUrl("javascript:" + jsString + sb.toString());
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   public RNCWebViewManager() {
@@ -921,6 +953,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         "captureScreen", CAPTURE_SCREEN
     );
     map.put("setGeolocationPermission", SET_GEOLOCATION_PERMISSION);
+    map.put("findInPage", COMMAND_SEARCH_IN_PAGE);
     return map;
   }
 
@@ -970,6 +1003,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         if (args.size() == 2) {
           ((RNCWebView) root).setGeolocationPermission(args.getString(0), args.getBoolean(1));
         }
+        break;
+      case COMMAND_SEARCH_IN_PAGE:
+        ((RNCWebView) root).searchInPage(args.getString(0));
         break;
 
     }
