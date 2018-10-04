@@ -284,6 +284,15 @@ export type AndroidWebViewProps = $ReadOnly<{|
   customSchemes?: $ReadOnlyArray<string>,
 
   /**
+   * Function that allows custom handling of any web view requests. Return
+   * `true` from the function to continue loading the request and `false`
+   * to stop loading.
+   * @platform ios
+   */
+  onShouldStartLoadWithRequest?: (event: WebViewEvent) => mixed,
+
+
+  /**
    * Specifies the mixed content mode. i.e WebView will allow a secure origin to load content from any other origin.
    *
    * Possible values for `mixedContentMode` are:

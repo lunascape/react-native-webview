@@ -146,6 +146,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         messagingEnabled={typeof this.props.onMessage === 'function'}
         onMessage={this.onMessage}
         contentInset={this.props.contentInset}
+        onShouldStartLoadWithRequest={this.props.onShouldStartLoadWithRequest}
         automaticallyAdjustContentInsets={
           this.props.automaticallyAdjustContentInsets
         }
