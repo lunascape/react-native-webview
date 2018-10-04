@@ -164,6 +164,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         allowUniversalAccessFromFileURLs={
           this.props.allowUniversalAccessFromFileURLs
         }
+        onCaptureScreen={this.onCaptureScreen}
         originWhitelist={originWhitelist}
         mixedContentMode={this.props.mixedContentMode}
         saveFormDataDisabled={this.props.saveFormDataDisabled}
@@ -238,12 +239,29 @@ class WebView extends React.Component<WebViewSharedProps, State> {
   };
 
   /**
+   * Capture Screen the current page.
+   */
+  captureScreen = (data: string) => {
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      UIManager.RNCWebView.Commands.captureScreen,
+      [String(data)]
+    );
+  };
+
+  /**
    * We return an event with a bunch of fields including:
    *  url, title, loading, canGoBack, canGoForward
    */
   updateNavigationState = (event: WebViewNavigationEvent) => {
     if (this.props.onNavigationStateChange) {
       this.props.onNavigationStateChange(event.nativeEvent);
+    }
+  };
+
+  onCaptureScreen = (event: WebViewEvent) => {
+    if (this.props.onCaptureScreen) {
+      this.props.onCaptureScreen(event.nativeEvent);
     }
   };
 

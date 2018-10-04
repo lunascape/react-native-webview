@@ -79,6 +79,14 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import android.graphics.Canvas;
+import android.os.Environment;
+import android.widget.Toast;
+
+
 /**
  * Manages instances of {@link WebView}
  *
@@ -117,6 +125,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public static final int COMMAND_STOP_LOADING = 4;
   public static final int COMMAND_POST_MESSAGE = 5;
   public static final int COMMAND_INJECT_JAVASCRIPT = 6;
+
+  public static final int CAPTURE_SCREEN = 7;
+  public static final String DOWNLOAD_DIRECTORY = Environment.getExternalStorageDirectory() + "/Android/data/jp.co.lunascape.android.ilunascape/downloads/";
 
   // Use `webView.loadUrl("about:blank")` to reliably reset the view
   // state and release page resources (including any running JavaScript).
@@ -468,7 +479,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     public void onMessage(String message) {
       WritableMap data = Arguments.createMap();
       data.putString("data", message);
-      // dispatchEvent(this, new TopMessageEvent(this.getId(), data));
+      // dispatchEvent(this, TopMessageEvent.createMessageEvent(this.getId(), data));
     }
 
     public void setCustomSchemes(ArrayList<Object> schemes) {
@@ -493,11 +504,45 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       event.putString("title", this.getTitle());
       event.putBoolean("canGoBack", this.canGoBack());
       event.putBoolean("canGoForward", this.canGoForward());
-      dispatchEvent(this, new TopMessageEvent(this.getId(), event));
+      dispatchEvent(this, TopMessageEvent.createMessageEvent(this.getId(), event));
     }
     protected void cleanupCallbacksAndDestroy() {
       setWebViewClient(null);
       destroy();
+    }
+
+    public void captureScreen(String message) {
+      final String fileName = System.currentTimeMillis() + ".jpg";
+
+      File d = new File(DOWNLOAD_DIRECTORY);
+      d.mkdirs();
+      final String localFilePath = DOWNLOAD_DIRECTORY + fileName;
+      boolean success = false;
+      try {
+        Picture picture = this.capturePicture();
+        int width = message.equals("CAPTURE_SCREEN") ? this.getWidth() : picture.getWidth();
+        int height = message.equals("CAPTURE_SCREEN") ? this.getHeight() : picture.getHeight();
+        Bitmap b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(b);
+        picture.draw(c);
+
+        FileOutputStream fos = new FileOutputStream(localFilePath);
+        if (fos != null) {
+          b.compress(Bitmap.CompressFormat.JPEG, 80, fos);
+          fos.close();
+        }
+        success = true;
+      } catch (Throwable t) {
+        System.out.println(t);
+      } finally {
+        WritableMap event = Arguments.createMap();
+        event.putDouble("target", this.getId());
+        event.putBoolean("result", success);
+        if (success) {
+          event.putString("data", localFilePath);
+        }
+        dispatchEvent(this, TopMessageEvent.createCaptureScreenEvent(this.getId(), event));
+      }
     }
   }
 
@@ -592,7 +637,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
                 data.putString("type", "contextmenu");
                 data.putString("url", url);
                 data.putString("image_url", image_url);
-                dispatchEvent(webView, new TopMessageEvent(webView.getId(), data));
+                dispatchEvent(webView, TopMessageEvent.createMessageEvent(webView.getId(), data));
               }
             }
           };
@@ -799,7 +844,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         "reload", COMMAND_RELOAD,
         "stopLoading", COMMAND_STOP_LOADING,
         "postMessage", COMMAND_POST_MESSAGE,
-        "injectJavaScript", COMMAND_INJECT_JAVASCRIPT
+        "injectJavaScript", COMMAND_INJECT_JAVASCRIPT,
+        "captureScreen", CAPTURE_SCREEN
       );
   }
 
@@ -842,6 +888,10 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         RNCWebView reactWebView = (RNCWebView) root;
         reactWebView.evaluateJavascriptWithFallback(args.getString(0));
         break;
+      case CAPTURE_SCREEN:
+        ((RNCWebView) root).captureScreen(args.getString(0));
+        break;
+
     }
   }
 
@@ -874,5 +924,13 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     EventDispatcher eventDispatcher =
       reactContext.getNativeModule(UIManagerModule.class).getEventDispatcher();
     eventDispatcher.dispatchEvent(event);
+  }
+
+  @Override
+  public @Nullable Map getExportedCustomDirectEventTypeConstants() {
+      return MapBuilder.of(
+        TopMessageEvent.CAPTURE_SCREEN_EVENT_NAME,
+        MapBuilder.of("registrationName", "onCaptureScreen")
+      );
   }
 }
