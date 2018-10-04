@@ -165,6 +165,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
           this.props.allowUniversalAccessFromFileURLs
         }
         onCaptureScreen={this.onCaptureScreen}
+        onLocationAskPermission={this.onLocationAskPermission}
         originWhitelist={originWhitelist}
         mixedContentMode={this.props.mixedContentMode}
         saveFormDataDisabled={this.props.saveFormDataDisabled}
@@ -250,6 +251,19 @@ class WebView extends React.Component<WebViewSharedProps, State> {
   };
 
   /**
+   * Make a CallBack message when Ask for Geolocation access
+   */
+  setGeolocationPermission = (origin: string, allow: boolean) => {
+    console.log(origin);
+    console.log(allow);
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      UIManager.PBWebView.Commands.setGeolocationPermission,
+      [String(origin), Boolean(allow)]
+    );
+  };
+
+  /**
    * We return an event with a bunch of fields including:
    *  url, title, loading, canGoBack, canGoForward
    */
@@ -259,6 +273,11 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     }
   };
 
+  onLocationAskPermission = (event: WebViewEvent) => {
+    if (this.props.onLocationAskPermission) {
+      this.props.onLocationAskPermission(event.nativeEvent);
+    }
+  }
   onCaptureScreen = (event: WebViewEvent) => {
     if (this.props.onCaptureScreen) {
       this.props.onCaptureScreen(event.nativeEvent);

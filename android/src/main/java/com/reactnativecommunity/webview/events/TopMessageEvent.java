@@ -11,6 +11,7 @@ import com.facebook.react.uimanager.events.RCTEventEmitter;
 
 public class TopMessageEvent {
   public static final String CAPTURE_SCREEN_EVENT_NAME = "captureScreen";
+  public static final String ASK_LOCATION_PERMISSION_EVENT_NAME = "askLocationPermission";
   public static final String ON_MESSAGE_EVENT_NAME = "topMessage";
 
   public static PBWebViewGenericEvent createMessageEvent(int viewId, WritableMap eventData) {
@@ -18,6 +19,9 @@ public class TopMessageEvent {
   }
   public static PBWebViewGenericEvent createCaptureScreenEvent(int viewId, WritableMap eventData) {
     return new PBWebViewGenericEvent(viewId, CAPTURE_SCREEN_EVENT_NAME, eventData);
+  }
+  public static PBWebViewGenericEvent createLocationAskPermissionEvent(int viewId, WritableMap eventData) {
+    return new PBWebViewGenericEvent(viewId, ASK_LOCATION_PERMISSION_EVENT_NAME, eventData);
   }
 
   static class PBWebViewGenericEvent extends Event<PBWebViewGenericEvent> {
