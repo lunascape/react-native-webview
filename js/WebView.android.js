@@ -284,6 +284,17 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     }
   };
 
+  /**
+   * Find keyword in the current page.
+   */
+  findInPage = (data: string, callback: any) => {
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      UIManager.RNCWebView.Commands.findInPage,
+      [String(data), callback]
+    );
+  };
+
   getWebViewHandle = () => {
     // return ReactNative.findNodeHandle(this.webViewRef.current);
     return ReactNative.findNodeHandle(this.refs[RCT_WEBVIEW_REF]);
