@@ -85,6 +85,7 @@ import java.io.FileOutputStream;
 import android.graphics.Canvas;
 import android.os.Environment;
 import android.widget.Toast;
+import android.content.DialogInterface;
 
 
 /**
@@ -125,7 +126,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public static final int COMMAND_STOP_LOADING = 4;
   public static final int COMMAND_POST_MESSAGE = 5;
   public static final int COMMAND_INJECT_JAVASCRIPT = 6;
-
+  public static final int SET_GEOLOCATION_PERMISSION = 8;
   public static final int CAPTURE_SCREEN = 7;
   public static final String DOWNLOAD_DIRECTORY = Environment.getExternalStorageDirectory() + "/Android/data/jp.co.lunascape.android.ilunascape/downloads/";
 
@@ -358,6 +359,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     protected boolean messagingEnabled = false;
     protected @Nullable RNCWebViewClient mRNCWebViewClient;
     private ArrayList<Object> customSchemes = new ArrayList<>();
+    private GeolocationPermissions.Callback _callback;
 
     protected class RNCWebViewBridge {
       RNCWebView mContext;
@@ -544,6 +546,17 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         dispatchEvent(this, TopMessageEvent.createCaptureScreenEvent(this.getId(), event));
       }
     }
+
+    public void setGeolocationPermissionCallback(GeolocationPermissions.Callback callback) {
+      this._callback = callback;
+    }
+
+    public void setGeolocationPermission(String origin, boolean allow) {
+      if (this._callback != null) {
+        this._callback.invoke(origin, allow, false);
+        this.setGeolocationPermissionCallback(null);
+      }
+    }
   }
 
   public RNCWebViewManager() {
@@ -568,8 +581,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  protected WebView createViewInstance(ThemedReactContext reactContext) {
-    RNCWebView webView = createRNCWebViewInstance(reactContext);
+  protected WebView createViewInstance(final ThemedReactContext reactContext) {
+    final RNCWebView webView = createRNCWebViewInstance(reactContext);
     webView.setWebChromeClient(new WebChromeClient() {
       @Override
       public boolean onConsoleMessage(ConsoleMessage message) {
@@ -581,9 +594,69 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       }
 
       @Override
-      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+      public void onGeolocationPermissionsShowPrompt(final String origin, final GeolocationPermissions.Callback callback) {
         callback.invoke(origin, true, false);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+          final boolean remember = false;
+          AlertDialog.Builder builder = new AlertDialog.Builder(webView.getContext());
+          builder.setTitle(webView.getContext().getResources().getString(R.string.locations));
+          builder.setMessage(webView.getContext().getResources().getString(R.string.locations_ask_permission))
+                  .setCancelable(true).setPositiveButton(webView.getContext().getResources().getString(R.string.allow), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+              // origin, allow, remember
+              callback.invoke(origin, true, remember);
+            }
+          }).setNegativeButton(webView.getContext().getResources().getString(R.string.dont_allow), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+              // origin, allow, remember
+              callback.invoke(origin, false, remember);
+            }
+          });
+          AlertDialog alert = builder.create();
+          alert.show();
+        } else {
+          webView.setGeolocationPermissionCallback(callback);
+          WritableMap event = Arguments.createMap();
+          event.putDouble("target", webView.getId());
+          event.putString("origin", origin);
+          dispatchEvent(webView, TopMessageEvent.createLocationAskPermissionEvent(webView.getId(), event));
+        }
       }
+      @Override
+      public boolean onCreateWindow(final WebView webView, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+        final WebView newView = new WebView(reactContext);
+        newView.setWebViewClient(new WebViewClient() {
+          @Override
+          public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            WritableMap event = Arguments.createMap();
+            event.putDouble("target", webView.getId());
+            event.putString("url", url);
+            event.putBoolean("loading", false);
+            event.putDouble("progress", webView.getProgress());
+            event.putString("title", webView.getTitle());
+            event.putBoolean("canGoBack", webView.canGoBack());
+            event.putBoolean("canGoForward", webView.canGoForward());
+            dispatchEvent(webView, TopMessageEvent.createNewWindowEvent(webView.getId(), event));
+            try {
+              webView.removeView(newView);
+              newView.destroy();
+            } catch (Exception e) {
+              // Exception if occurs here only means that newView was removed.
+              // No need to do anything in this case
+            }
+          }
+        });
+        // Create dynamically a new view
+        newView.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        webView.addView(newView);
+
+        WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+        transport.setWebView(newView);
+        resultMsg.sendToTarget();
+        return true;
+      }
+
     });
     reactContext.addLifecycleEventListener(webView);
     mWebViewConfig.configWebView(webView);
@@ -838,7 +911,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   @Override
   public @Nullable Map<String, Integer> getCommandsMap() {
-    return MapBuilder.of(
+    Map<String, Integer> map = MapBuilder.of(
         "goBack", COMMAND_GO_BACK,
         "goForward", COMMAND_GO_FORWARD,
         "reload", COMMAND_RELOAD,
@@ -846,7 +919,9 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         "postMessage", COMMAND_POST_MESSAGE,
         "injectJavaScript", COMMAND_INJECT_JAVASCRIPT,
         "captureScreen", CAPTURE_SCREEN
-      );
+    );
+    map.put("setGeolocationPermission", SET_GEOLOCATION_PERMISSION);
+    return map;
   }
 
   @Override
@@ -891,6 +966,11 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       case CAPTURE_SCREEN:
         ((RNCWebView) root).captureScreen(args.getString(0));
         break;
+      case SET_GEOLOCATION_PERMISSION:
+        if (args.size() == 2) {
+          ((RNCWebView) root).setGeolocationPermission(args.getString(0), args.getBoolean(1));
+        }
+        break;
 
     }
   }
@@ -929,8 +1009,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @Override
   public @Nullable Map getExportedCustomDirectEventTypeConstants() {
       return MapBuilder.of(
-        TopMessageEvent.CAPTURE_SCREEN_EVENT_NAME,
-        MapBuilder.of("registrationName", "onCaptureScreen")
+        TopMessageEvent.CAPTURE_SCREEN_EVENT_NAME, MapBuilder.of("registrationName", "onCaptureScreen"),
+        TopMessageEvent.ASK_LOCATION_PERMISSION_EVENT_NAME, MapBuilder.of("registrationName", "onLocationAskPermission")
       );
   }
 }
