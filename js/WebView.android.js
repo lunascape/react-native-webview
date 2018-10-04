@@ -258,7 +258,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     console.log(allow);
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
-      UIManager.PBWebView.Commands.setGeolocationPermission,
+      UIManager.RNCWebView.Commands.setGeolocationPermission,
       [String(origin), Boolean(allow)]
     );
   };
