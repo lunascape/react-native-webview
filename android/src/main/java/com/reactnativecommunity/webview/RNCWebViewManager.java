@@ -204,7 +204,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         return false;
       }
       // launchIntent(view.getContext(), url);
-      // return true; 
+      // return true;
       Uri uri = Uri.parse(url);
       RNCWebView webView = (RNCWebView) view;
       if (uri == null) {
