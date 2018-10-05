@@ -376,6 +376,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     protected boolean messagingEnabled = false;
     protected @Nullable RNCWebViewClient mRNCWebViewClient;
     private ArrayList<Object> customSchemes = new ArrayList<>();
+    private String customOverrideUrlFormat = "";
     private GeolocationPermissions.Callback _callback;
 
     protected class RNCWebViewBridge {
@@ -509,6 +510,10 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       return this.customSchemes;
     }
 
+    public void setCustomOverrideUrlFormat(String format) {
+      this.customOverrideUrlFormat = format;
+    }
+
     public String getCustomOverrideUrlFormat() {
       return this.customOverrideUrlFormat;
     }
@@ -523,7 +528,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       event.putString("title", this.getTitle());
       event.putBoolean("canGoBack", this.canGoBack());
       event.putBoolean("canGoForward", this.canGoForward());
-      dispatchEvent(this, TopMessageEvent.createMessageEvent(this.getId(), event));
+      dispatchEvent(this, TopMessageEvent.createStartRequestEvent(this.getId(), event));
     }
     protected void cleanupCallbacksAndDestroy() {
       setWebViewClient(null);
@@ -982,6 +987,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public void setCustomSchemes(WebView view, ReadableArray schemes) {
     ((RNCWebView)view).setCustomSchemes(schemes.toArrayList());
   }
+
+  @ReactProp(name = "customOverrideUrlFormat")
+  public void setCustomOverrideUrlFormat(WebView view, String customOverrideUrlFormat) {
+    ((RNCWebView)view).setCustomOverrideUrlFormat(customOverrideUrlFormat);
+  }
+
   @Override
   protected void addEventEmitters(ThemedReactContext reactContext, WebView view) {
     // Do not register default touch emitter and let WebView implementation handle touches
@@ -1094,7 +1105,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       return MapBuilder.of(
         TopMessageEvent.CAPTURE_SCREEN_EVENT_NAME, MapBuilder.of("registrationName", "onCaptureScreen"),
         TopMessageEvent.CREATE_WINDOW_EVENT_NAME, MapBuilder.of("registrationName", "onShouldCreateNewWindow"),
-        TopMessageEvent.ASK_LOCATION_PERMISSION_EVENT_NAME, MapBuilder.of("registrationName", "onLocationAskPermission")
+        TopMessageEvent.ASK_LOCATION_PERMISSION_EVENT_NAME, MapBuilder.of("registrationName", "onLocationAskPermission"),
+        TopMessageEvent.SHOULD_START_REQUEST_EVENT_NAME, MapBuilder.of("registrationName", "onShouldStartLoadWithRequest")
       );
   }
 }
