@@ -19,7 +19,7 @@ import {
   UIManager,
   View,
   Image,
-  requireNativeComponent
+  requireNativeComponent,
 } from 'react-native';
 
 import invariant from 'fbjs/lib/invariant';
@@ -239,6 +239,11 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     );
   };
 
+  // Bookmarklet handling
+  evaluateJavaScript = (js) => {
+    this.injectJavaScript(js);
+  };
+
   /**
    * Capture Screen the current page.
    */
@@ -283,7 +288,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
       this.props.onCaptureScreen(event.nativeEvent);
     }
   };
-
+  
   /**
    * Find keyword in the current page.
    */

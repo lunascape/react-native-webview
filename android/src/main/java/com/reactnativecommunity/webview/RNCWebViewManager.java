@@ -54,6 +54,7 @@ import com.reactnativecommunity.webview.events.TopLoadingErrorEvent;
 import com.reactnativecommunity.webview.events.TopLoadingFinishEvent;
 import com.reactnativecommunity.webview.events.TopLoadingStartEvent;
 import com.reactnativecommunity.webview.events.TopMessageEvent;
+import android.annotation.TargetApi;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -140,6 +141,16 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
   protected WebViewConfig mWebViewConfig;
   protected @Nullable WebView.PictureListener mPictureListener;
+
+  private RNCWebViewPackage mPackage;
+  
+  public void setPackage(RNCWebViewPackage aPackage){
+    this.mPackage = aPackage;
+  }
+
+  public RNCWebViewPackage getPackage(){
+    return this.mPackage;
+  }
 
   protected static class RNCWebViewClient extends WebViewClient {
 
@@ -615,6 +626,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   protected WebView createViewInstance(final ThemedReactContext reactContext) {
     final RNCWebView webView = createRNCWebViewInstance(reactContext);
+    final RNCWebViewModule module = this.mPackage.getModule();
     webView.setWebChromeClient(new WebChromeClient() {
       @Override
       public boolean onConsoleMessage(ConsoleMessage message) {
@@ -653,6 +665,23 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           event.putString("origin", origin);
           dispatchEvent(webView, TopMessageEvent.createLocationAskPermissionEvent(webView.getId(), event));
         }
+      }
+      protected void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
+        module.openFileChooserView(uploadMsg, acceptType);
+      }
+
+      protected void openFileChooser(ValueCallback<Uri> uploadMsg) {
+        module.openFileChooserView(uploadMsg, null);
+      }
+
+      protected void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
+        module.openFileChooserView(uploadMsg, acceptType);
+      }
+
+      @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+      @Override
+      public boolean onShowFileChooser (WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+        return module.openFileChooserViewL(filePathCallback, fileChooserParams);
       }
       @Override
       public boolean onCreateWindow(final WebView webView, boolean isDialog, boolean isUserGesture, Message resultMsg) {
