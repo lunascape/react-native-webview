@@ -90,6 +90,8 @@ import android.content.DialogInterface;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import android.webkit.URLUtil;
+import android.webkit.DownloadListener;
 
 
 /**
@@ -779,6 +781,21 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           webView.requestFocusNodeHref(msg);
         }
         return false; // return true to disable copy/paste action bar
+      }
+    });
+    webView.setDownloadListener(new DownloadListener() {
+      // @Override
+      public void onDownloadStart(String url, String userAgent,
+                                        String contentDisposition, String mimetype,
+                                        long contentLength) {
+        final String filename = URLUtil.guessFileName(url, contentDisposition, mimetype);
+        WritableMap data = Arguments.createMap();
+        data.putString("type", "downloadAction");
+        data.putString("url", url);
+        data.putString("contentDisposition", contentDisposition);
+        data.putString("filename", filename);
+        data.putString("mimetype", mimetype);
+        dispatchEvent(webView, TopMessageEvent.createMessageEvent(webView.getId(), data));
       }
     });
 
