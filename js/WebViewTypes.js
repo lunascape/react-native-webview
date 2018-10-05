@@ -219,6 +219,13 @@ export type AndroidWebViewProps = $ReadOnly<{|
   onContentSizeChange?: (event: WebViewEvent) => mixed,
 
   /**
+     * Allows custom handling of window.open() by a JS handler. Return true
+     * or false from this method to use default behavior.
+     * @platform ios
+     */
+  onShouldCreateNewWindow?: (event: any) => mixed,
+
+  /**
    * Sets whether Geolocation is enabled. The default is false.
    * @platform android
    */

@@ -140,6 +140,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         scalesPageToFit={this.props.scalesPageToFit}
         allowFileAccess={this.props.allowFileAccess}
         injectedJavaScript={this.props.injectedJavaScript}
+        onShouldCreateNewWindow={this.onShouldCreateNewWindow}
         userAgent={this.props.userAgent}
         customSchemes={this.props.customSchemes}
         javaScriptEnabled={this.props.javaScriptEnabled}
@@ -283,12 +284,23 @@ class WebView extends React.Component<WebViewSharedProps, State> {
       this.props.onLocationAskPermission(event.nativeEvent);
     }
   }
+  /**
+   * Allows custom handling of window.open() by a JS handler. Return true
+   * or false from this method to use default behavior.
+   * @platform ios
+  */
+  onShouldCreateNewWindow = (event: any) => {
+    console.log(event.nativeEvent);
+    if (this.props.onShouldCreateNewWindow) {
+      this.props.onShouldCreateNewWindow(event.nativeEvent);
+    }
+  };
+
   onCaptureScreen = (event: WebViewEvent) => {
     if (this.props.onCaptureScreen) {
       this.props.onCaptureScreen(event.nativeEvent);
     }
   };
-  
   /**
    * Find keyword in the current page.
    */

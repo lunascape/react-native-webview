@@ -727,6 +727,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     settings.setBuiltInZoomControls(true);
     settings.setDisplayZoomControls(false);
     settings.setDomStorageEnabled(true);
+    settings.setSupportMultipleWindows(true);
 
     settings.setAllowFileAccess(false);
     settings.setAllowContentAccess(false);
@@ -1092,6 +1093,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public @Nullable Map getExportedCustomDirectEventTypeConstants() {
       return MapBuilder.of(
         TopMessageEvent.CAPTURE_SCREEN_EVENT_NAME, MapBuilder.of("registrationName", "onCaptureScreen"),
+        TopMessageEvent.CREATE_WINDOW_EVENT_NAME, MapBuilder.of("registrationName", "onShouldCreateNewWindow"),
         TopMessageEvent.ASK_LOCATION_PERMISSION_EVENT_NAME, MapBuilder.of("registrationName", "onLocationAskPermission")
       );
   }
