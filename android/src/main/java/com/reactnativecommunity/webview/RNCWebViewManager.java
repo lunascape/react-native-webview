@@ -224,6 +224,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             intent.setData(Uri.parse(url));
             webView.getContext().startActivity(intent);
             webView.shouldStartLoadWithRequest(url);
+            webView.onOpenExternalApp(url);
             return true;
           }
           return false;
@@ -233,6 +234,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             // Checking supported scheme only
             if (customSchemes != null && customSchemes.contains(urlScheme)) {
               webView.shouldStartLoadWithRequest(url);
+              webView.onOpenExternalApp(url);
               return true;
             } else if (urlScheme.equalsIgnoreCase("intent")) {
               // Get payload and scheme the intent wants to open
@@ -245,6 +247,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
                 if (customSchemes != null && customSchemes.contains(scheme)) {
                   String convertedUrl = scheme + "://" + payload;
                   webView.shouldStartLoadWithRequest(convertedUrl);
+                  webView.onOpenExternalApp(url);
                   return true;
                 }
               }
@@ -530,6 +533,14 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       event.putBoolean("canGoForward", this.canGoForward());
       dispatchEvent(this, TopMessageEvent.createStartRequestEvent(this.getId(), event));
     }
+
+    public void onOpenExternalApp(String url) {
+      WritableMap data = Arguments.createMap();
+      data.putString("type", "onOpenExternalApp");
+      data.putString("url", url);
+      dispatchEvent(this, TopMessageEvent.createMessageEvent(this.getId(), data));
+    }
+
     protected void cleanupCallbacksAndDestroy() {
       setWebViewClient(null);
       destroy();
