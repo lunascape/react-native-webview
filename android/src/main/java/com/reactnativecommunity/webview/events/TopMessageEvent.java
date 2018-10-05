@@ -14,6 +14,7 @@ public class TopMessageEvent {
   public static final String CAPTURE_SCREEN_EVENT_NAME = "captureScreen";
   public static final String ASK_LOCATION_PERMISSION_EVENT_NAME = "askLocationPermission";
   public static final String ON_MESSAGE_EVENT_NAME = "topMessage";
+  public static final String SHOULD_START_REQUEST_EVENT_NAME = "shouldStartRequest";
 
   public static PBWebViewGenericEvent createMessageEvent(int viewId, WritableMap eventData) {
     return new PBWebViewGenericEvent(viewId, ON_MESSAGE_EVENT_NAME, eventData);
@@ -26,6 +27,9 @@ public class TopMessageEvent {
   }
   public static PBWebViewGenericEvent createLocationAskPermissionEvent(int viewId, WritableMap eventData) {
     return new PBWebViewGenericEvent(viewId, ASK_LOCATION_PERMISSION_EVENT_NAME, eventData);
+  }
+  public static PBWebViewGenericEvent createStartRequestEvent(int viewId, WritableMap eventData) {
+    return new PBWebViewGenericEvent(viewId, SHOULD_START_REQUEST_EVENT_NAME, eventData);
   }
 
   static class PBWebViewGenericEvent extends Event<PBWebViewGenericEvent> {

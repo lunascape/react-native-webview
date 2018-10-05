@@ -143,6 +143,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         onShouldCreateNewWindow={this.onShouldCreateNewWindow}
         userAgent={this.props.userAgent}
         customSchemes={this.props.customSchemes}
+        customOverrideUrlFormat={this.props.customOverrideUrlFormat}
         javaScriptEnabled={this.props.javaScriptEnabled}
         thirdPartyCookiesEnabled={this.props.thirdPartyCookiesEnabled}
         domStorageEnabled={this.props.domStorageEnabled}
