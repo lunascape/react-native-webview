@@ -311,6 +311,14 @@ export type AndroidWebViewProps = $ReadOnly<{|
    * @platform android
    */
   mixedContentMode?: ?('never' | 'always' | 'compatibility'),
+
+  /**
+  * A RefreshControl component, used to provide pull-to-refresh
+  * functionality for the WebView.
+  *
+  * See [RefreshControl](https://facebook.github.io/react-native/docs/refreshcontrol.html).
+  */
+  refreshControl?: ?element,
 |}>;
 
 export type WebViewSharedProps =  $ReadOnly<{|
