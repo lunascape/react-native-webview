@@ -18,7 +18,7 @@ android {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'
-    implementation 'com.android.support:appcompat-v7:23.0.1'
-    implementation 'com.android.support:design:23.0.1'
+    compile 'com.facebook.react:react-native:+'
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
 }
