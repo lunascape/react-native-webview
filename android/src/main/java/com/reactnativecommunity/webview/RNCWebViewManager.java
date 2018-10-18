@@ -92,6 +92,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import android.webkit.URLUtil;
 import android.webkit.DownloadListener;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import java.net.URISyntaxException;
 
 
 /**
@@ -197,6 +200,33 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             launchIntent(view.getContext(), url);
             return true;
           }
+        }
+      }
+
+      if (url.startsWith("intent://")) {
+        try {
+            Context context = view.getContext();
+            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+
+            if (intent != null) {
+                view.stopLoading();
+
+                PackageManager packageManager = context.getPackageManager();
+                ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                if (info != null) {
+                    context.startActivity(intent);
+                } else {
+                    String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+                    view.loadUrl(fallbackUrl);
+
+                    // or call external broswer
+                  //  Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl));
+                  //  context.startActivity(browserIntent);
+                }
+                return true;
+            }
+        } catch (URISyntaxException e) {
+            
         }
       }
 
