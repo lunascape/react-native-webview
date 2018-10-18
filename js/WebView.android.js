@@ -176,6 +176,19 @@ class WebView extends React.Component<WebViewSharedProps, State> {
       />
     );
 
+    // This part is to handle the RefreshControl or Pull to Refresh webview feature.
+    const refreshControl = this.props.refreshControl;
+    if (refreshControl) {
+      return React.cloneElement(
+        refreshControl,
+        {},
+        <View style={styles.container}>
+          {webView}
+          {otherView}
+        </View>
+      );
+    }
+
     return (
       <View style={styles.container}>
         {webView}
