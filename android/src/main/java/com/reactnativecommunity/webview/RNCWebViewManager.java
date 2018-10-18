@@ -220,6 +220,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             return true;
           }
         } catch (URISyntaxException e) {
+          // NOP
         }
       }
 
