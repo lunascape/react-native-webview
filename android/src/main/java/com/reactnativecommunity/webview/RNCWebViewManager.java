@@ -205,85 +205,88 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
 
       if (url.startsWith("intent://")) {
         try {
-          Context context = view.getContext();
-          Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-          if (intent != null) {
-            view.stopLoading();
-            PackageManager packageManager = context.getPackageManager();
-            ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            if (info != null) {
-              context.startActivity(intent);
-            } else {
-              String fallbackUrl = intent.getStringExtra("browser_fallback_url");
-              view.loadUrl(fallbackUrl);
+            Context context = view.getContext();
+            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+            if (intent != null) {
+                view.stopLoading();
+                PackageManager packageManager = context.getPackageManager();
+                ResolveInfo info = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                if (info != null) {
+                    context.startActivity(intent);
+                } else {
+                    String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+                    view.loadUrl(fallbackUrl);
+                }
+                return true;
             }
-            return true;
-          }
         } catch (URISyntaxException e) {
           e.printStackTrace();
         }
       }
 
-      if (mOriginWhitelist != null && shouldHandleURL(mOriginWhitelist, url)) {
-        return false;
-      }
+      // if (mOriginWhitelist != null && shouldHandleURL(mOriginWhitelist, url)) {
+      //   return false;
+      // }
       // launchIntent(view.getContext(), url);
       // return true;
+
+      // Handle CustomScheme and CustomOverrideUrlFormat functionalities
       Uri uri = Uri.parse(url);
       RNCWebView webView = (RNCWebView) view;
       if (uri == null) {
         return false;
       }
       String urlScheme = uri.getScheme();
-        if (urlScheme.equalsIgnoreCase("http") || urlScheme.equalsIgnoreCase("https") ||
-                urlScheme.equalsIgnoreCase("file")) {
-          String customOverrideUrlFormat = webView.getCustomOverrideUrlFormat();
-          if (customOverrideUrlFormat == null || customOverrideUrlFormat.length() == 0 || Pattern.compile(customOverrideUrlFormat) == null) {
-            return false;
-          }
-          Pattern pattern = Pattern.compile(customOverrideUrlFormat);
-          Matcher matcher = pattern.matcher(url);
-          if (matcher.find()) {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse(url));
-            webView.getContext().startActivity(intent);
+      if (urlScheme.equalsIgnoreCase("http") || urlScheme.equalsIgnoreCase("https")
+          || urlScheme.equalsIgnoreCase("file")) {
+        String customOverrideUrlFormat = webView.getCustomOverrideUrlFormat();
+        if (customOverrideUrlFormat == null || customOverrideUrlFormat.length() == 0
+            || Pattern.compile(customOverrideUrlFormat) == null) {
+          return false;
+        }
+        Pattern pattern = Pattern.compile(customOverrideUrlFormat);
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.find()) {
+          Intent intent = new Intent(Intent.ACTION_VIEW);
+          intent.setData(Uri.parse(url));
+          webView.getContext().startActivity(intent);
+          webView.shouldStartLoadWithRequest(url);
+          webView.onOpenExternalApp(url);
+          return true;
+        }
+        return false;
+      } else {
+        ArrayList<Object> customSchemes = webView.getCustomSchemes();
+        try {
+          // Checking supported scheme only
+          if (customSchemes != null && customSchemes.contains(urlScheme)) {
             webView.shouldStartLoadWithRequest(url);
             webView.onOpenExternalApp(url);
             return true;
-          }
-          return false;
-        } else {
-          ArrayList<Object> customSchemes = webView.getCustomSchemes();
-          try {
-            // Checking supported scheme only
-            if (customSchemes != null && customSchemes.contains(urlScheme)) {
-              webView.shouldStartLoadWithRequest(url);
-              webView.onOpenExternalApp(url);
-              return true;
-            } else if (urlScheme.equalsIgnoreCase("intent")) {
-              // Get payload and scheme the intent wants to open
-              Pattern pattern = Pattern.compile("^intent://(\\S*)#Intent;.*scheme=([a-zA-Z]+)");
-              Matcher matcher = pattern.matcher(url);
-              if (matcher.find()) {
-                String payload = matcher.group(1);
-                String scheme = matcher.group(2);
-                // Checking supported scheme only
-                if (customSchemes != null && customSchemes.contains(scheme)) {
-                  String convertedUrl = scheme + "://" + payload;
-                  webView.shouldStartLoadWithRequest(convertedUrl);
-                  webView.onOpenExternalApp(url);
-                  return true;
-                }
+          } else if (urlScheme.equalsIgnoreCase("intent")) {
+            // Get payload and scheme the intent wants to open
+            Pattern pattern = Pattern.compile("^intent://(\\S*)#Intent;.*scheme=([a-zA-Z]+)");
+            Matcher matcher = pattern.matcher(url);
+            if (matcher.find()) {
+              String payload = matcher.group(1);
+              String scheme = matcher.group(2);
+              // Checking supported scheme only
+              if (customSchemes != null && customSchemes.contains(scheme)) {
+                String convertedUrl = scheme + "://" + payload;
+                webView.shouldStartLoadWithRequest(convertedUrl);
+                webView.onOpenExternalApp(url);
+                return true;
               }
             }
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            view.getContext().startActivity(intent);
-          } catch (ActivityNotFoundException e) {
-            FLog.w(ReactConstants.TAG, "activity not found to handle uri scheme for: " + url, e);
           }
-          return true;
+          Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+          view.getContext().startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+          FLog.w(ReactConstants.TAG, "activity not found to handle uri scheme for: " + url, e);
         }
+        return true;
+      }
     }
 
     private void launchIntent(Context context, String url) {
