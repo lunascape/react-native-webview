@@ -392,6 +392,10 @@ export type WebViewSharedProps =  $ReadOnly<{|
    */
   onMessage?: (event: WebViewMessageEvent) => mixed,
 
+
+  // Do not use onMessage callback to avoid js broken in some webpage
+  onLsMessage?: (event: WebViewMessageEvent) => mixed,
+
   /**
    * Boolean value that forces the `WebView` to show the loading view
    * on the first load.

@@ -364,6 +364,12 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     const { onMessage } = this.props;
     onMessage && onMessage(event);
   };
+
+  onLsMessage = (event: WebViewMessageEvent) => {
+    const { onLsMessage } = this.props;
+    onLsMessage && onLsMessage(event);
+  };
+
 }
 
 const RNCWebView = requireNativeComponent('RNCWebView');
