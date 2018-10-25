@@ -19,7 +19,7 @@ import {
   UIManager,
   View,
   Image,
-  requireNativeComponent
+  requireNativeComponent,
 } from 'react-native';
 
 import invariant from 'fbjs/lib/invariant';
@@ -39,6 +39,7 @@ import type {
 } from './WebViewTypes';
 
 const resolveAssetSource = Image.resolveAssetSource;
+var RCT_WEBVIEW_REF = 'webview';
 
 const WebViewState = keyMirror({
   IDLE: null,
@@ -133,14 +134,18 @@ class WebView extends React.Component<WebViewSharedProps, State> {
 
     const webView = (
       <NativeWebView
-        ref={this.webViewRef}
+        // ref={this.webViewRef}
+        ref={RCT_WEBVIEW_REF}
         key="webViewKey"
         style={webViewStyles}
         source={resolveAssetSource(source)}
         scalesPageToFit={this.props.scalesPageToFit}
         allowFileAccess={this.props.allowFileAccess}
         injectedJavaScript={this.props.injectedJavaScript}
+        onShouldCreateNewWindow={this.onShouldCreateNewWindow}
         userAgent={this.props.userAgent}
+        customSchemes={this.props.customSchemes}
+        customOverrideUrlFormat={this.props.customOverrideUrlFormat}
         javaScriptEnabled={this.props.javaScriptEnabled}
         thirdPartyCookiesEnabled={this.props.thirdPartyCookiesEnabled}
         domStorageEnabled={this.props.domStorageEnabled}
@@ -148,6 +153,7 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         onMessage={this.onMessage}
         overScrollMode={this.props.overScrollMode}
         contentInset={this.props.contentInset}
+        onShouldStartLoadWithRequest={this.props.onShouldStartLoadWithRequest}
         automaticallyAdjustContentInsets={
           this.props.automaticallyAdjustContentInsets
         }
@@ -164,6 +170,8 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         allowUniversalAccessFromFileURLs={
           this.props.allowUniversalAccessFromFileURLs
         }
+        onCaptureScreen={this.onCaptureScreen}
+        onLocationAskPermission={this.onLocationAskPermission}
         originWhitelist={originWhitelist}
         mixedContentMode={this.props.mixedContentMode}
         saveFormDataDisabled={this.props.saveFormDataDisabled}
@@ -171,6 +179,19 @@ class WebView extends React.Component<WebViewSharedProps, State> {
         {...nativeConfig.props}
       />
     );
+
+    // This part is to handle the RefreshControl or Pull to Refresh webview feature.
+    const refreshControl = this.props.refreshControl;
+    if (refreshControl) {
+      return React.cloneElement(
+        refreshControl,
+        {},
+        <View style={styles.container}>
+          {webView}
+          {otherView}
+        </View>
+      );
+    }
 
     return (
       <View style={styles.container}>
@@ -237,6 +258,35 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     );
   };
 
+  // Bookmarklet handling
+  evaluateJavaScript = (js) => {
+    this.injectJavaScript(js);
+  };
+
+  /**
+   * Capture Screen the current page.
+   */
+  captureScreen = (data: string) => {
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      UIManager.RNCWebView.Commands.captureScreen,
+      [String(data)]
+    );
+  };
+
+  /**
+   * Make a CallBack message when Ask for Geolocation access
+   */
+  setGeolocationPermission = (origin: string, allow: boolean) => {
+    console.log(origin);
+    console.log(allow);
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      UIManager.RNCWebView.Commands.setGeolocationPermission,
+      [String(origin), Boolean(allow)]
+    );
+  };
+
   /**
    * We return an event with a bunch of fields including:
    *  url, title, loading, canGoBack, canGoForward
@@ -247,8 +297,42 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     }
   };
 
+  onLocationAskPermission = (event: WebViewEvent) => {
+    if (this.props.onLocationAskPermission) {
+      this.props.onLocationAskPermission(event.nativeEvent);
+    }
+  }
+  /**
+   * Allows custom handling of window.open() by a JS handler. Return true
+   * or false from this method to use default behavior.
+   * @platform ios
+  */
+  onShouldCreateNewWindow = (event: any) => {
+    console.log(event.nativeEvent);
+    if (this.props.onShouldCreateNewWindow) {
+      this.props.onShouldCreateNewWindow(event.nativeEvent);
+    }
+  };
+
+  onCaptureScreen = (event: WebViewEvent) => {
+    if (this.props.onCaptureScreen) {
+      this.props.onCaptureScreen(event.nativeEvent);
+    }
+  };
+  /**
+   * Find keyword in the current page.
+   */
+  findInPage = (data: string, callback: any) => {
+    UIManager.dispatchViewManagerCommand(
+      this.getWebViewHandle(),
+      UIManager.RNCWebView.Commands.findInPage,
+      [String(data), callback]
+    );
+  };
+
   getWebViewHandle = () => {
-    return ReactNative.findNodeHandle(this.webViewRef.current);
+    // return ReactNative.findNodeHandle(this.webViewRef.current);
+    return ReactNative.findNodeHandle(this.refs[RCT_WEBVIEW_REF]);
   };
 
   onLoadingStart = (event: WebViewNavigationEvent) => {
@@ -289,6 +373,12 @@ class WebView extends React.Component<WebViewSharedProps, State> {
     const { onLoadProgress} = this.props;
     onLoadProgress && onLoadProgress(event);
   }
+
+  onLsMessage = (event: WebViewMessageEvent) => {
+    const { onLsMessage } = this.props;
+    onLsMessage && onLsMessage(event);
+  };
+
 }
 
 const RNCWebView = requireNativeComponent('RNCWebView');
