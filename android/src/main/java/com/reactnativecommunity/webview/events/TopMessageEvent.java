@@ -13,8 +13,9 @@ public class TopMessageEvent {
   public static final String CREATE_WINDOW_EVENT_NAME = "createWindow";
   public static final String CAPTURE_SCREEN_EVENT_NAME = "captureScreen";
   public static final String ASK_LOCATION_PERMISSION_EVENT_NAME = "askLocationPermission";
-  public static final String ON_MESSAGE_EVENT_NAME = "topMessage";
+  // public static final String ON_MESSAGE_EVENT_NAME = "topMessage";
   public static final String SHOULD_START_REQUEST_EVENT_NAME = "shouldStartRequest";
+  public static final String ON_MESSAGE_EVENT_NAME = "onLsMessage";
 
   public static PBWebViewGenericEvent createMessageEvent(int viewId, WritableMap eventData) {
     return new PBWebViewGenericEvent(viewId, ON_MESSAGE_EVENT_NAME, eventData);

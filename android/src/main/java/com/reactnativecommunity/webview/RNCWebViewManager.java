@@ -1144,7 +1144,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
         TopMessageEvent.CAPTURE_SCREEN_EVENT_NAME, MapBuilder.of("registrationName", "onCaptureScreen"),
         TopMessageEvent.CREATE_WINDOW_EVENT_NAME, MapBuilder.of("registrationName", "onShouldCreateNewWindow"),
         TopMessageEvent.ASK_LOCATION_PERMISSION_EVENT_NAME, MapBuilder.of("registrationName", "onLocationAskPermission"),
-        TopMessageEvent.SHOULD_START_REQUEST_EVENT_NAME, MapBuilder.of("registrationName", "onShouldStartLoadWithRequest")
+        TopMessageEvent.SHOULD_START_REQUEST_EVENT_NAME, MapBuilder.of("registrationName", "onShouldStartLoadWithRequest"),
+        TopMessageEvent.ON_MESSAGE_EVENT_NAME, MapBuilder.of("registrationName", "onLsMessage")
       );
   }
 }
