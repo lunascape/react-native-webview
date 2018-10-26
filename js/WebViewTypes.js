@@ -246,6 +246,11 @@ export type AndroidWebViewProps = $ReadOnly<{|
    * @platform android
    */
   overScrollMode?: ?OverScrollModeType,
+     * Allows custom handling of window.open() by a JS handler. Return true
+     * or false from this method to use default behavior.
+     * @platform ios
+     */
+  onShouldCreateNewWindow?: (event: any) => mixed,
 
   /**
    * Sets whether Geolocation is enabled. The default is false.
@@ -310,6 +315,18 @@ export type AndroidWebViewProps = $ReadOnly<{|
    */
   userAgent?: ?string,
 
+  customSchemes?: $ReadOnlyArray<string>,
+
+  customOverrideUrlFormat?: ?string,
+  /**
+   * Function that allows custom handling of any web view requests. Return
+   * `true` from the function to continue loading the request and `false`
+   * to stop loading.
+   * @platform ios
+   */
+  onShouldStartLoadWithRequest?: (event: WebViewEvent) => mixed,
+
+
   /**
    * Specifies the mixed content mode. i.e WebView will allow a secure origin to load content from any other origin.
    *
@@ -321,6 +338,14 @@ export type AndroidWebViewProps = $ReadOnly<{|
    * @platform android
    */
   mixedContentMode?: ?('never' | 'always' | 'compatibility'),
+
+  /**
+  * A RefreshControl component, used to provide pull-to-refresh
+  * functionality for the WebView.
+  *
+  * See [RefreshControl](https://facebook.github.io/react-native/docs/refreshcontrol.html).
+  */
+  refreshControl?: ?element,
 |}>;
 
 export type WebViewSharedProps =  $ReadOnly<{|
@@ -393,6 +418,10 @@ export type WebViewSharedProps =  $ReadOnly<{|
    * must be a string.
    */
   onMessage?: (event: WebViewMessageEvent) => mixed,
+
+
+  // Do not use onMessage callback to avoid js broken in some webpage
+  onLsMessage?: (event: WebViewMessageEvent) => mixed,
 
   /**
    * Function that is invoked when the `WebView` is loading.
